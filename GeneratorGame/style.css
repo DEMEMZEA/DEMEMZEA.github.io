@@ -1,0 +1,247 @@
+body::-webkit-scrollbar{
+    display: none;
+}
+body{
+    -ms-overflow-style: none;  
+    scrollbar-width: none;  
+}
+
+.button{
+    font-size: 1.5vmax;
+    padding: 10px;
+    margin: 10px;
+    color: #bbbbbb;
+    border: #fff solid 0.25vmax;
+    background-color: #222;
+}
+
+.minibutton{
+    font-size: 0.75vmax;
+    padding: 0px 2px;
+    margin: 5px;
+    color: #bbbbbb;
+    border: #fff solid 5px;
+    background-color: #222;
+}
+
+.tab{
+	transition-duration: 0.1s;
+	font-size: 1.25vmax;
+    font-weight: 600;
+	height: 6vh;
+	width: 8vw;
+	border-width: 7px;
+	color: #800000;
+	border-color: #49EC79;
+	background-color: #69DD69;
+    margin-top: 0.5vw;
+}
+
+.tab:hover{
+	border-width: 10px;
+	color: #58000F;
+	border-color:#38DB68;
+	background-color: #58DD58;
+}
+
+.golden{
+    color: #ffd700;
+    border-color: #ffd700;
+    background-color: #d5a01a;
+}
+
+.tab.golden:hover{
+    color: #efc700;
+    border-color: #efc700;
+    background-color: #ca9520;
+}
+
+.challenges{
+    color: #004;
+    border-color: #55c;
+    background-color: #22a;
+}
+
+.tab.challenges:hover{
+    color: #003;
+    border-color: #44a;
+    background-color: #339;
+}
+
+.challenge{
+    color: #000;
+    border-color: #117;
+    background-color: #66c;
+}
+
+.right{
+text-align: left;
+float: right;
+width: 50vw;
+}
+
+.left{
+text-align: right;
+float: left;
+width: 50vw;
+}
+
+.button:hover{
+    border-color: #ff0000;
+}
+
+.button.canbuy:hover{
+    border-color: #00ff00;
+}
+
+.button.golden:hover{
+    border-color: #ff7000;
+}
+
+.golden.cangolden:hover{
+    border-color: #80eb00;
+}
+
+.hasgolden{
+    color: #ffe710;
+    border-color: #ffe710;
+    background-color: #7bc426;
+}
+
+.golden.hasgolden:hover{
+    border-color: #fab530;
+}
+
+.golden.subtab:hover{
+    border-color: #ba8500;
+}
+
+.button.canchallenge:hover{
+    border-color: #197
+}
+
+body{
+    margin: 0px;
+    text-align: center;
+    font-size: 1vmax;
+    color: #202020;
+    background-color: #808080;
+}
+
+.option{
+    font-size: 1.25vmax;
+    padding: 10px;
+    margin-top: 2vh;
+    color: #fff;
+    background-color: #000;
+    border: #00f solid 5px;
+}
+
+a{
+color: #008;
+text-decoration: underline;
+cursor: pointer;
+}
+
+ul {
+    list-style-position: inside;
+}
+
+.bodyhidden{
+    color: #808080;
+    background-color: #808080;
+    border: none;
+}
+
+.multUps{
+    margin: 0px;
+    height: 15vh;
+    width: 13.2vw;
+    font-size: 1vmax;
+}
+
+table{
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.multChalls{
+    margin: 0px;
+    height: 17.25vh;
+    width: 30vw;
+    font-size: 1.25vmax;
+}
+
+.superChall{
+    margin: 0px;
+    width: calc(60vw + 4px);
+    font-size: 1.25vmax;
+}
+
+.autobuyer{
+    font-size: 1vmax;
+    padding: 10px;
+    border: solid 5px;
+}
+
+.void{
+    color: #505050;
+    border-color: #282828;
+    background-color: #000000;
+}
+
+.button.void:hover{
+    border-color: #901010;
+}
+
+.void.canvoid:hover{
+    border-color: #109010;
+}
+
+.void.subtab:hover{
+    border-color: #000;
+    background-color: #444;
+    color: #000;
+}
+
+.tab.void:hover{
+    color: #000;
+    border-color: #101010;
+    background-color: #222;
+}
+
+.voidUps{
+    color: #696969; /*606060 was slightly too dark so i give you this*/
+    margin: 0px;
+    height: 25vh;
+    width: 20vw;
+    font-size: 1vmax;
+}
+
+.building{
+    height: 7.5vmax;
+    width: 7.5vmax;
+}
+
+.unlockedbuilding{
+    filter: blur(0px);
+}
+
+.lockedbuilding{
+    filter: blur(2vmax);
+}
+
+.buildingtd{
+    width: 25%;
+    padding: 0.5%;
+}
+
+.void.canbuy:hover{
+    border-color: #109010;
+}
+
+.lockedbuilding > span > .button:hover{
+    color: #505050;
+    border-color: #282828;
+    background-color: #000000;
+}

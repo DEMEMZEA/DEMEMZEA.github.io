@@ -1,1 +1,300 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Generator game</title>
+<link rel="icon" href="thumb.png">
+<meta charset="UTF-8">
+<script src="ExpantaNum.js"></script>
+<script src="Vue.js"></script>
+<script src="Base.js"></script>
+<script src="formulas.js" defer></script>
+<script src="script.js" defer></script>
+<script src="setup.js" defer></script>
+<link href="style.css" rel="stylesheet" defer></link>
+</head>
+<body>
+<div id="vue">
+<div v-if="!changelog">
+<div id="top">
+<button class="tab" @click="game.tab=0">Options</button>
+<button class="tab" @click="game.tab=1">Generators</button>
+<button class="tab golden" @click="game.tab=2" v-if="game.unlocks.golden||game.unlocks.void">Golden</button>
+<button class="tab challenges" @click="game.tab=3" v-if="game.goldenUpgrades[22]||game.unlocks.void">Challenges</button>
+<button class="tab void" @click="game.tab=4" v-if="game.unlocks.void">Void</button>
+</div>
+<div id="secret" v-if="secret===true">
+<div id="news" style="border: 5px black solid; margin: 5px 35%;">1st person to DM me this (and how you got this) gets a surprise</div>
+</div>
+<div id="tab1" v-if="game.tab==1">
+You have {{ format(game.money) }} money<br>
+You have {{ format(game.machines) }} machine{{ pluralize(game.machines) }}<br>
+<div v-if="game.lastBought">You can't buy anything for {{ formatTime(game.lastBought) }}</div>
+<div id="buttons">
+<div class="left">
+<button v-bind:class="{canbuy:!game.superChallenge&&game.money.gte(machinePrice())&&!game.lastBought}" class="button" @click="buyMachines(0)">  Buy 1 machine for {{ format(machinePrice()) }}</button>
+<br>
+<button v-bind:class="{canbuy:!game.superChallenge&&game.money.gte(timePrices())&&(game.upgrades.time<19||game.goldenUpgrades[31])&&!game.lastBought}" class="button" @click="buyUpgrades(0)"><span v-if="game.upgrades.time!=19||game.goldenUpgrades[13]">Buy 1 time upgrade for {{ format(timePrices()) }}</span><span v-else>You cannot buy a time upgrade</span><br>Currently: {{ format(game.upgrades.time) }}</button>
+<br>
+<button v-bind:class="{canbuy:!game.superChallenge&&game.money.gte(megaPrices())&&!game.lastBought}" v-if="game.goldenUpgrades[1]" class="button" @click="buyUpgrades(2)" >Buy 1  mega money upgrade for {{ format(megaPrices()) }}<br>Currently: {{ game.upgrades.mega }} </button>
+</div>
+<div class="right">
+<button v-bind:class="{canbuy:!game.superChallenge&&game.money.gte(machinePrice())&&!game.lastBought}" class="button" @click="buyMachines(1)"> Buy {{ format(game.money.div(machinePrice()).floor()) }} machine{{ pluralize(game.money.div(machinePrice()).floor()) }} for {{ format(game.money.div(machinePrice()).floor().mult(machinePrice())) }}</button>
+<br>
+<button v-bind:class="{canbuy:!game.superChallenge&&game.money.gte(moneyPrices())&&!game.lastBought}" class="button" @click="buyUpgrades(1)">Buy 1 money upgrade for {{ format(moneyPrices()) }}<br>Currently: {{ format(game.upgrades.money) }}</button>
+<br>
+<button v-bind:class="{canbuy:!game.superChallenge&&game.money.gte(hyperPrices())&&!game.lastBought}" v-if="game.goldenUpgrades[1]" class="button" @click="buyUpgrades(3)">Buy 1 hyper money upgrade for {{ format(hyperPrices()) }}<br>Currently: {{ game.upgrades.hyper }} </button>
+</div>
+</div>
+<button v-bind:class="{canbuy:!game.superChallenge&&game.money.gte(megaPrices())}" v-if="game.unlocks.mega&&!game.goldenUpgrades[1]" class="button" @click="buyUpgrades(2)" >Buy 1 mega money upgrade for {{ format(megaPrices()) }}<br>Currently: {{ game.upgrades.mega }} </button>
+<br>
+<button v-bind:class="{cangolden:(game.challenge===0&&game.money.add(game.machines.times(5e5)).gte(2**128))||game.challenge!==0&&game.money.add(game.machines.times(5e5)).gte(getCompletionPrice(game.challenge-1))}" v-if="game.money.add(game.machines.times(5e5)).gte(2**128)||game.unlocks.golden" class="button golden" @click="golden()">
+<span v-if="!(game.challenge+game.superChallenge)">Go golden for {{ format(calculateGoldenGain()) }} golden points</span>
+<span v-if="game.challenge" >You can{{ game.money.add(game.machines.times(5e5)).gte(getCompletionPrice(game.challenge-1))?"":"not" }} go golden right now.<br>
+<span v-if="game.money.add(game.machines.times(5e5)).gte(getCompletionPrice(game.challenge-1))">Complete challenge</span>
+<span v-else>You need {{ format(getCompletionPrice(game.challenge-1)) }} money to complete the challenge</span></span>
+<span v-if="game.superChallenge">{{ game.money.lt(getSCCompletionPrice().pow(game.completedsuperChallenges+1))?`You need ${format(getSCCompletionPrice().pow(game.completedsuperChallenges+1))} money to get any Superchallenge completions`:`exit the Superchallenge for ${game.money.logBase(getSCCompletionPrice()).floor().sub(game.completedsuperChallenges)} Superchallenge completion${pluralize(game.money.logBase(getSCCompletionPrice()).floor().sub(game.completedsuperChallenges))} ` }} </span>
+</button>
+<br>
+<button v-bind:class="{canvoid:game.money.add(game.machines.times(5e5)).gte('1e100000')}" v-if="game.unlocks.void||hasSCMilestone(3)" class="button void" @click="slide()">Slide into the void for {{ format(calculateAbstractGain()) }} abstract{{ pluralize(calculateAbstractGain()) }} </button>
+</div>
+<div id="tab0" v-if="game.tab==0">
+<button class="option" @click="save()">Save your game</button>
+<button class="option" @click="exporty()">Export your save</button>
+<button class="option" @click="importy()">Import your save</button>
+<button class="option" @click="reset()">Reset the game</button>
+<br>
+<button class="option" @click="toggleOffline()">Offline progress: {{ game.offlineProgress?"On":"Off" }} </button>
+<button class="option" @click="toggleAutosave()">Autosave: {{ game.autosave?"On":"Off" }} </button>
+<button class="option" @click="toggleHotkeys()">Hotkeys: {{ game.hotkeys?"On":"Off" }} </button>
+<br v-if="secret===true">
+<button v-if="secret===true" @click="secret=false" class="option">Disable secret</button>
+<br>
+<button class="option" @click="">Current notation:
+<select class="option" onchange="game.notation=Number(this.value)" style="padding: 0px; border: 0px; margin: 0px;">
+<option disabled selected>{{ ["Scientific","Engineering","Logarithmic","Base x"][game.notation] }} (ex: {{ format(123456789,game.precision,game.notation) }})</option>
+<option value="0">Scientific (ex: {{ format(123456789,game.precision,0) }})</option>
+<option value="1">Engineering (ex: {{ format(123456789,game.precision,1) }})</option>
+<option value="2">Logarithmic (ex: {{ format(123456789,game.precision,2) }})</option>
+<option value="3">Base x (ex: {{ format(123456789,game.precision,3) }})</option>
+</select></button>
+<button v-if="game.notation===3" class="option">base: {{ game.base }} <span v-if="game.base<10">&nbsp;&nbsp;</span><input step="1" style="width: 10vw" oninput="game.base=Number(this.value)" type="range" max="36" min="2" v-bind:value="game.base"></button>
+<br>
+<button class="option"><span v-if="game.intervalTime<10">&nbsp;</span> Update time: {{ game.intervalTime }} ms<span v-if="game.intervalTime<100">&nbsp;&nbsp;</span><br><input step="5" style="width: 90%;" onchange="setTime()" oninput="game.intervalTime=Number(this.value)" type="range" max="200" min="5" v-bind:value="game.intervalTime"></button>
+<button class="option">Notation precision: {{ game.precision }}<br><input step="1" style="width: 90%;" oninput="game.precision=Number(this.value)" type="range" max="6" min="2" v-bind:value="game.precision"></button>
+<br v-if="game.autosave">
+<button class="option" v-if="game.autosave"><span v-if="game.saveInterval<10">&nbsp;&nbsp;</span>Autosave Interval: {{ game.saveInterval }}s <input step="1" style="width: 10vw;" onchange="setSaveTime()" oninput="game.saveInterval=Number(this.value)" type="range" max="60" min="1" v-bind:value="game.saveInterval"></button>
+<br>
+<a @click="changelog=true">Changelog</a>
+<br>
+<a target="_blank" href="https://discord.gg/PSwjHsusFf">Discord</a>
+<br>
+<ul>
+Special thanks to:
+<li>PapauloGamerOfc for helping me with centering</li>
+<li>Yarno, Abe, lool, and somerandomperson for helping with testing the game</li>
+<li>Mike's toolbox for helping me solve the sum of consecutive powers issue</li>
+</ul>
+Current hotkeys:<br> 
+(M) for machines, (Shift+M) for machine <span v-if="game.unlocks.void"><br>( M becomes buy Max Void/Building Upgrades if you're on the void tab,<br> depending on the subtab you're on )</span>, (T) for time, (U) for money,<br>
+(S) for mega, (H) for hyper, and (G) for golden
+<button class="bodyhidden" @click="secret=true" v-if="secret===false" >Secret</button>
+</div>
+<div id="tab2" v-if="game.tab==2">
+You have {{ format(game.goldenPoints) }} Golden points
+<div v-if="game.completedChallenges[2]">
+<div class="left">
+<button class="button golden subtab" @click="subtab.golden=0">Golden upgrades</button>
+</div>
+<div class="right">
+<button class="button golden subtab" @click="subtab.golden=1">Automation</button>
+</div>
+</div>
+<div v-if="subtab.golden==0">
+You have {{ format(game.goldenMachines) }} golden machine{{ pluralize(game.goldenMachines) }}
+<div id="golden">
+<div class="left">
+<button v-bind:class="{cangolden:game.goldenPoints.logBase(2).times(concreteParticlesEffect(1)).gte(game.goldenMachines)}" class="button golden" @click="buyGolden(0)">Buy 1 golden machine for {{ format(ExpantaNum(2).root(concreteParticlesEffect(1)).pow(game.goldenMachines)) }} golden point{{ pluralize(ExpantaNum(2).root(concreteParticlesEffect(1)).pow(game.goldenMachines)) }}</button>
+</div>
+<div class="right">
+<button v-bind:class="{cangolden:game.goldenPoints.logBase(2).times(concreteParticlesEffect(1)).gte(game.goldenMachines)}" class="button golden" @click="buyGolden(1)">Buy {{ format(buyableGoldenMachinesInfo(0)) }} golden machine{{ pluralize(buyableGoldenMachinesInfo(0)) }} for {{ format(buyableGoldenMachinesInfo(1)) }}</button>
+</div>
+</div>
+<br>
+you have {{ format(game.goldenEssence) }} golden essence (+{{ format(calculateEssenceGain()) }}/s)<br>
+boosting machines by {{ format(goldenEssenceMultiplier(0)) }} and golden machines by {{ format(goldenEssenceMultiplier(1)) }}<br>
+<table>
+<tbody>
+<tr v-for="o in 3+(game.completedChallenges[3]>=2)"><td v-for="i in 3+(game.completedChallenges[3]>=1)">
 
+<button
+@click="buyGoldenUpgrades(10*o+i-11)" class="button golden multUps" v-bind:class=
+"{cangolden:game.goldenPoints.gte(goldenUpgrades.prices[10*o+i-11])&&(10*o+i-11>9?game.goldenUpgrades[10*o+i-21]:true),
+hasgolden:game.goldenUpgrades[10*o+i-11]===true}">
+{{ goldenUpgrades.discriptions[10*o+i-11] }}
+<span v-if="goldenUpgrades.rewards[10*o+i-11]!==undefined"><br>Currently: {{ goldenUpgrades.rewards[10*o+i-11]() }} </span>
+<br> Cost: {{ format(goldenUpgrades.prices[10*o+i-11].div(game.buildingUpgrades.box[2]+1)) }}
+</button>
+
+</td></tr>
+</tbody>
+</table>
+</div>
+<div v-if="subtab.golden==1">
+    <br>Autobuyers don't generate waiting time, but they also don't work when there is waiting time<br>
+
+<table>
+<tbody>
+<tr v-for="o in 3"><td v-for="i in 2">
+<div class="autobuyer golden" v-if="game.completedChallenges[2]>=o*2+i-2">{{ autobuyers[o*2+i-3].name }} autobuyer
+<br>Current time: {{ formatTime(Math.max(50,autobuyers[o*2+i-3].startTime/2**game.autobuyers[o*2+i-3].upgrades)) }}
+<br> Mode: <button @click="game.autobuyers[o*2+i-3].on=!game.autobuyers[o*2+i-3].on" class="minibutton golden cangolden">{{ game.autobuyers[o*2+i-3].on?"on":"off" }}</button>
+<br> <button v-bind:class="{cangolden:game.goldenPoints.gte(3**game.autobuyers[o*2+i-3].upgrades*autobuyers[o*2+i-3].startPrice),hasgolden:autobuyers[o*2+i-3].startTime/2**game.autobuyers[o*2+i-3].upgrades<=50}" class="button golden" @click="upgradeAuto(o*2+i-3)"  >Upgrade for {{ format(3**game.autobuyers[o*2+i-3].upgrades*autobuyers[o*2+i-3].startPrice) }} golden points</button> 
+<br> <div v-if="game.autobuyers[o*2+i-3].hasOwnProperty('bulk')">You currently do{{ game.autobuyers[o*2+i-3].bulk?" ":" not " }}have bulk autobuying 
+<br> <button v-bind:class="{cangolden:game.goldenPoints.gte(autobuyers[o*2+i-3].bulkPrice),hasgolden:game.autobuyers[o*2+i-3].bulk}" class="button golden" @click="upgradeAuto(o*2+i+3)"> Buy for {{ format(autobuyers[o*2+i-3].bulkPrice) }} golden points </button></div> </div>
+</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+<div id="tab3" v-if="game.tab==3">
+You are currently {{ game.superChallenge?"in the Superchallenge":["not in a challenge",`in challenge ${game.challenge}`][Math.sign(game.challenge)] }}
+<br v-if="game.challenge!==0">
+<button v-bind:class="{canchallenge:game.money.add(game.machines.times(5e5)).gte(getCompletionPrice())}" class="button challenge" v-if="game.challenge" @click="enterChallenge(0)" > {{ game.money.add(game.machines.times(5e5)).gte(getCompletionPrice(game.challenge-1))?"Complete":"Exit" }} challenge</button><br>
+<table>
+<tbody>
+<tr v-for="o in 3"><td v-for="i in 2">
+<button v-bind:class="{canchallenge:game.challenge===0||game.challenge!==o*2+i-2}" class="button multChalls challenge" @click="enterChallenge(o*2+i-2)">Challenge {{ o*2+i-2 }}: {{ challenges.names[o*2+i-3] }} ({{ game.completedChallenges[o*2+i-3] }}/{{ challenges.maxCompletions[o*2+i-3]+(o*2+i-3===5?game.buildingUpgrades.factory[1]:0) }})<br> {{ challenges.discriptions[o*2+i-3]() }}  <br> goal: {{ format(getCompletionPrice(o*2+i-3)) }}<br>Reward: {{ challenges.rewards[o*2+i-3]() }} </button>
+</td></tr>
+</tbody>
+</table>
+<button v-if="game.unlocks.superChallenge" v-bind:style="calculateSCHeight()" class="button superChall challenge canchallenge"  @click="enterSuperChallenge()">
+The Superchallenge!<br>
+Here, all challenge's effects are applied.<span v-if="game.buildingUpgrades.machine[0]>=1"><br> The void building "machine"'s 1st effect is also weakened ( 3^x - > x<span v-if="hasSCMilestone(6)">^log(x)</span> )</span><br>
+Gaining more completions remove some of the resets of going golden. You gain 1 completion every power of {{ format(getSCCompletionPrice()) }} money reached in the challenge<br>
+Completions: {{ game.completedsuperChallenges }} <span v-if="hasSCMilestone(4)">({{format(getSCCompletionPrice().pow(game.completedsuperChallenges+1))}} money)</span> <br>
+Rewards: money and machines go ^{{ format(Math.sqrt(game.completedsuperChallenges)/(1+Math.sqrt(game.completedsuperChallenges))) }} when going golden instead of ^0<br>
+<span v-for="i in superChallengeRewards" v-if="i.req()">
+At {{ i.amt }} completions: {{ i.text }} <span v-if="i.hasOwnProperty('reward')&&game.completedsuperChallenges>=i.amt">Currently: {{ format(i.reward()) }} </span> <br>
+</span>
+</button>
+</div>
+<div id="tab4" v-if="game.tab==4">
+You have {{ format(game.abstracts) }} abstract{{ pluralize(game.abstracts) }}<br>
+<div class="left">
+<button class="button void subtab " @click="subtab.void=0">The Void</button>
+</div>
+<div class="right">
+<button class="button void subtab" @click="subtab.void=1*game.unlocks.buildings">{{ game.unlocks.buildings?"Buildings":"Unlock at 1e5CP"}}</button>
+</div>
+<br>
+<div v-if="subtab.void==0">
+In front of you there's an infinite void.<br>
+you can throw some of your abstracts here so that the void can start producing some concrete particles.<br>
+<img src="circle.png" v-bind:style="calculateHoleSize()"><br>
+You have thrown {{ format(game.void.abstracts) }} abstract{{ pluralize(game.void.abstracts) }} into the void, making it make {{ format(calculateConcreteGain()) }} Concrete Particles/s <br>
+you have {{ format(game.void.particles) }} Concrete particles, dividing the price of machines by {{ format(concreteParticlesEffect(0)) }}, and rooting the price of golden machines by {{ format(concreteParticlesEffect(1)) }} <br>
+<div class="left"><button v-bind:class="{canvoid:game.abstracts.div(10).gte(1)}" class="button void" style="margin: 5px;" @click="throwVoid(10)">Throw 10%</button>
+<button v-bind:class="{canvoid:game.abstracts.div(4).gte(1)}" class="button void" style="margin: 5px 6.5px 5px 0px" @click="throwVoid(25)">Throw 25%</button>
+</div><div class="right"><button v-bind:class="{canvoid:game.abstracts.div(2).gte(1)}" class="button void" style="margin: 5px 0px 5px 6.5px;" @click="throwVoid(50)">Throw 50%</button>
+<button v-bind:class="{canvoid:game.abstracts.div(1).gte(1)}" class="button void" style="margin: 5px;" @click="throwVoid(100)">Throw 100%</button>
+</div>
+<br>
+below are repeatable upgrades <!--- out of which i mostly forgot I already had coded ---> which can cost either particles or abstracts. <br>Their position has nothing to do with their type of cost, but it will be cosistent <br>( upgrades that cost particles will never cost abstracts and vice-versa)
+<br>
+<table>
+<tbody>
+<tr v-for="o in 2+(game.buildingUpgrades.house[2]>=1)"><td v-for="i in 2+(game.buildingUpgrades.house[2]>=2)">
+<button v-bind:class="{canvoid:(voidUpgrades.particles[o*10+i-11]?game.void.particles:game.abstracts).gte(voidUpgrades.prices[o*10+i-11]())}" class="button void voidUps" @click="buyVoidUpgrade(o*10+i-11)"> {{voidUpgrades.titles[o*10+i-11]}}<br><br>{{voidUpgrades.discriptions[o*10+i-11]}}<br>Currently: {{format(voidUpgrades.effects[o*10+i-11]())}}->{{format(voidUpgrades.effects[o*10+i-11](game.voidUpgrades[o*10+i-11]+1))}}<br>Cost: {{format(voidUpgrades.prices[o*10+i-11]())}} {{voidUpgrades.particles[o*10+i-11]?"particle":"abstract"}}{{pluralize(voidUpgrades.prices[o*10+i-11]())}}  </button>
+</td></tr>
+</tbody>
+</table>
+</div>
+<div v-if="subtab.void==1">
+Buildings' Upgrades are different in the sense that they don't actually take the resource they "cost" at any point
+<table>
+<tbody>
+<tr v-for="o in 2"><td v-for="i in 3" class="buildingtd" > 
+<div v-bind:class="game.void.particles.gte(buildings.requirements[buildings.names[o*3+i-4]])?'unlockedbuilding':'lockedbuilding'">
+{{buildings.names[o*3+i-4]}} {{  }}<br>
+<img v-bind:src="'Buildings/'+buildings.names[o*3+i-4]+'.png'" class="building"><br>
+
+<span v-for="m in 3"><button style="border-width: 0.5vmax;" class="button void" v-bind:class="{canbuy:canBuyBuildingUpgrade(buildings.names[o*3+i-4],m-1)}" @click="buyBuildingUpgrade(buildings.names[o*3+i-4],m-1)"> {{buildings.upgrades[buildings.names[o*3+i-4]].discriptions[m-1]}} <br> Cost: {{ format(buildings.upgrades[buildings.names[o*3+i-4]].costs[m-1](game.buildingUpgrades[buildings.names[o*3+i-4]][m-1])) }} {{ ["money","GP","abstracts"][buildings.upgrades[buildings.names[o*3+i-4]].costTypes[m-1]] }} </button><br></span>
+</div>
+<span v-if="game.void.particles.lt(buildings.requirements[buildings.names[o*3+i-4]])"><b>Unlock at {{format(buildings.requirements[buildings.names[o*3+i-4]])}} CP</b></span>
+</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<div v-else>
+<a @click="changelog=false">Go back</a>
+<h1>V 0.1</h1>
+<h2 style="font-weight: 600;">
+<ul>
+    <li>Created game</li>
+    <li>Created changelog</li>
+    <li>Machines cost 500000 money</li>
+</ul>
+</h2>
+<h2>V 0.1.1</h2>
+<h3>
+<ul>
+    <li>Added a machine softcap, when you have more than 2<sup>128</sup> of them<br>Their price goes up by 5e5*log2(machines/2<sup>127</sup>)</li>
+</ul>
+</h3>
+<h1>V 0.2</h1>
+<h2 style="font-weight: 600;">
+<ul>
+    <li>Added prestige, you gain more points based on money</li>
+    <li>Added golden machines: they make golden essence</li>
+    <li>Golden essence gives your machines a boost</li>
+</ul>
+</h2>
+<span style="font-size: 1px;">
+    <ul>
+        <li>Added Challenges</li>
+        <li>Removed Challenges</li>
+    </ul>
+</span>
+<h1>V0.3</h1>
+<h2 style="font-weight: 600;">
+<ul>
+    <li>Renamed Prestige to Golden</li>
+    <li>Added golden upgrades, they cost golden points and give boosts</li>
+</ul>
+</h2>
+<h1>V0.4</h1>
+<h2 style="font-weight: 600;">
+<ul>
+    <li>Added challenges ( only 2 up to this point )</li>
+    <li>Added a new notation</li>
+    <li>Added autobuyers</li>
+
+</ul>
+</h2>
+<h1 style="font-weight: 600;">V1.0: the full launch</h1>
+<h2 style="font-weight: 600;">
+<ul>
+<li> There are 6 challenges now</li>
+<li> Added the Superchallenge</li>
+<li> Added other softcaps</li>
+<li> Added 7 new golden upgrades and recoded them partially</li>
+</ul>
+</h2>
+<h2>V1.0.1
+<ul>
+<li> Autobuyers can now be tuenred on and off</li>
+<li> Softened the time upgrades' cap</li>
+</ul>
+</h2>
+<h2>V1.0.2
+<ul>
+<li> Added Hotkeys </li>
+<li> Fixed Superchallenge unlocking bug </li>
+</ul>
+</h2>
+</div>
+</div>
+</body>
+</html>
