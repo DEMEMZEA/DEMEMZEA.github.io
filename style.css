@@ -1,0 +1,24 @@
+body{
+    font-family: "Comic Sans MS";
+    margin: 0px;
+    text-align: center;
+    font-size: 2vmax;
+    color: #202020;
+    background-color: #808080;
+}
+
+.gengame{
+    background-color: #58000F;
+    font-size: 2vmax;
+    font-weight: bold;
+    color: #efc700;
+}
+
+button{
+    border-width: 0.5vmin;
+    margin: 0.25vmin;
+}
+
+b{
+    font-size: 93.75%;
+}
