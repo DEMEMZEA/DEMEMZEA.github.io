@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Simulatron Land</title>
+<link rel="icon" href="thumb.png">
+<script src="script.js"></script>
+<script src="game.js" defer></script>
+</head>
+<body style="display: none;">
+<div id="buttons" style="margin-top: 0.25vmin;">
+<button id="tabButton_0" class="gameStarted" onclick="tab(0)">Back to Game</button>
+<button id="tabButton_1" class="gameStarted" onclick="tab(1)">Options</button>
+<button id="tabButton_2" class="gameStarted" onclick="tab(2)">Strategies</button>
+</div>
+<div id="tab_0">
+    <button onclick="startGame()"><span id="start">S</span>tart The Game</button>
+    <button class="gameButton gameStarted"onclick="nextRound()">Next round</button>
+    <br>
+    <button class="gameButton gameStarted" onclick="toggleAuto(event)">Auto Replay: <span id="auto">Off</span></button>
+    <button class="gameButton gameStarted">interval between replays: 
+    <input class="gameButton gameStarted" style="width: 3.6vmax;" type="number" min="1" max="20000" value="1" id="autoTimeout" onchange="setAutoTimeout()"> MS</button> 
+    <div style="background-color: #fff; height: 1010px; width: 1010px; position: absolute; top: calc(62.5% - 505px); left: calc(50% - 505px); text-align: center; border: 5px solid #000;" id="map">
+    <div id="lines">
+    <div class="line" style="top: calc(50% - 400px);"></div>
+    <div class="line" style="top: calc(50% - 300px);"></div>
+    <div class="line" style="top: calc(50% - 200px);"></div>
+    <div class="line" style="top: calc(50% - 100px);"></div>
+    <div class="line bold" style="top: calc(50%);"></div>
+    <div class="line" style="top: calc(50% + 100px);"></div>
+    <div class="line" style="top: calc(50% + 200px);"></div>
+    <div class="line" style="top: calc(50% + 300px);"></div>
+    <div class="line" style="top: calc(50% + 400px);"></div>
+    <div class="column" style="left: calc(50% - 400px);"></div>
+    <div class="column" style="left: calc(50% - 300px);"></div>
+    <div class="column" style="left: calc(50% - 200px);"></div>
+    <div class="column" style="left: calc(50% - 100px);"></div>
+    <div class="column bold" style="left: calc(50%);"></div>
+    <div class="column" style="left: calc(50% + 100px);"></div>
+    <div class="column" style="left: calc(50% + 200px);"></div>
+    <div class="column" style="left: calc(50% + 300px);"></div>
+    <div class="column" style="left: calc(50% + 400px);"></div>
+    </div>
+    <div id="game">
+    </div>
+    </div>
+</div>
+<div id="tab_1">
+    <div id="options">Options chosen will only take effect after you restart your game
+    <br><button >Radius of Square: <input type="number" style="width: 5vmax;" min="1" value="10" onchange="options.radius = +this.value"></button>
+    <br><button >Amount of Simulatrons: <input type="number" style="width: 8vmax;" min="0" step="1" value="1000" onchange="options.simulatronAmount = this.value = Math.floor(this.value)"> </button>
+    <br><button >Failure percentages:<br>
+    cooperation: <input type="number" style="width: 5.5vmax;" min="0" max="100" value="0" step="0.1" onchange="options.failureChances.cooperation = +this.value/100">% betrayal: <input type="number" style="width: 5.5vmax;" min="0" max="100" value="0" step="0.1" onchange="options.failureChances.betrayal = +this.value/100">%</button>
+    <br><button >Spawning weights:<br>
+    Far: <input type="number" style="width: 5vmax;" min="0" value="1" onchange="options.spawnWeight.far = +this.value">, 
+    Close: <input type="number" style="width: 5vmax;" min="0" value="1" onchange="options.spawnWeight.close = +this.value">, 
+    Exact: <input type="number" style="width: 5vmax;" min="0" value="1" onchange="options.spawnWeight.exact = +this.value"></button>
+    <br><button >Simulation stops once all simulatrons are of the same type: <input type="checkbox" checked onchange="options.gameEnd = this.checked"></button>
+    </div>
+</div>
+<div id="tab_2">
+    <br>
+    <div id="strats">
+    </div>
+<button onclick="newStrat()">New strategy!</button><br>
+<div class="strat" id="newstrat">
+Name: <input type="text"><br>
+Color: #<input type="text" maxlength="6" onchange="this.style.color='#'+this.value"><br>
+<textarea></textarea>
+</div>
+</div>
+</body>
+<style>
+.simulatron {
+height: 10px;
+width: 10px;
+border-radius: 50%;
+display: inline-block;
+position: absolute;
+}
+body{
+margin: 0px;
+text-align: center;
+background-color: #bbb;
+font-variant-numeric: tabular-nums;
+font-weight: 900;
+}
+.line{
+width: 1009px;
+border: 1px solid #000;
+position: absolute;
+}
+.column{
+height: 1009px;
+border: 1px solid #000;
+position: absolute;
+}
+.bold{
+border-width: 2px;
+}
+.line.bold{
+width: 1006px;
+}
+.column.bold{
+height: 1006px;
+}
+button{
+border: 5px solid #fff;
+color: #000;
+font-weight: 900;
+font-size: 2vmax;
+margin: 0.25% 0% 0% 0%;
+}
+input{
+color: #000;
+font-weight: 900;
+font-size: 2vmax;
+border: 0px;
+padding: 0px;
+}
+#options{
+color: #000;
+font-weight: 900;
+font-size: 2vmax;
+}
+.name{
+color: #000;
+font-weight: 900;
+font-size: 1.75vmax;
+background-color: #ddd;
+margin: 2.5%;
+padding: 0.125vmin;
+-webkit-text-stroke: 0.05vmax black;
+}
+.far{
+margin: 0.5vmax;
+padding: 0.25vmax;
+}
+input[type="checkbox"]{
+width: 2vmax; 
+height: 1.75vmax;
+transform: translateY(calc(0.125vmin + 0.125vmax) );
+}
+.text{
+font-weight: 500;
+font-size: 0.75vmax;
+}
+.strat{
+display: inline-block;
+border: 5px solid #fff;
+color: #000;
+background-color: #eee;
+font-weight: 900;
+font-size: 1.25vmax;
+margin: 0.25% 0.125% 0% 0.125%;
+}
+textarea{
+resize: none;
+height: 12.5vh;
+width: 25vw;
+}
+</style>
+</html>

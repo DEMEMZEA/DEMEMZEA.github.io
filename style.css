@@ -7,11 +7,21 @@ body{
     background-color: #808080;
 }
 
+.redirect{
+    font-size: 2vmax;
+    font-weight: bold;
+}
+
 .gengame{
     background-color: #58000F;
     font-size: 2vmax;
     font-weight: bold;
     color: #efc700;
+}
+
+.simland{
+    background-color: #20d0d0;
+    color: #2020d0;
 }
 
 button{
