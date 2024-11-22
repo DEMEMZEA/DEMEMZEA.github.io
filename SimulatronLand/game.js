@@ -132,6 +132,8 @@ document.getElementById("strats").innerHTML=''
 
 function save(){
 localStorage.setItem("options",JSON.stringify(options))
+if(localStorage.getItem("id")===null)
+localStorage.setItem("id",String(Date.now())+"-"+String(Math.random()).split(".")[1])
 }
 
 function load(){
